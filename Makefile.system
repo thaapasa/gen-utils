@@ -1,0 +1,56 @@
+SYSTEM := $(shell uname -s)
+ARCH := $(shell uname -m)
+
+SYS := $(SYSTEM)
+
+ifeq "$(SYS)" "MINGW32_NT-6.0"
+  SYS := win32
+endif
+ifeq "$(SYS)" "MINGW32_NT-6.1"
+  SYS := win32
+endif
+
+ifeq "$(SYS)" "Linux"
+  SYS := linux
+endif
+
+.PHONY: showsys
+showsys:
+	echo $(SYS)
+
+
+
+# System specific settings
+
+# Linux
+##################################
+ifeq "$(SYS)" "linux"
+  TESTS = $(TESTSRCS:.cpp=.test)
+
+  # Linking
+  LDLIBS += -lpthread
+  LDPATH =
+
+  ifeq ($(BUILDSSL), true) 
+    LDLIBS += -lssl -lcrypto
+    LDPATH += -L/usr/src/openssl-0.9.7d
+  endif
+endif
+
+# Windows
+##################################
+ifeq "$(SYS)" "win32"
+  TESTS = $(TESTSRCS:.cpp=.exe)
+        
+  # Compiling
+  INCLUDE += -I$(MINGW_HOME)/include
+  LDLIBS += -Wl,--enable-auto-import
+
+  # Linking
+  LDLIBS += -lwinmm -lws2_32 
+  ifeq ($(BUILDSSL), true)
+    LDLIBS += -lm $(OPENSSL_HOME)/lib/libeay32.lib $(OPENSSL_HOME)/lib/ssleay32.lib
+  endif
+  LDPATH = 
+  LDFLAGS += -mwindows -mconsole
+endif

@@ -1,0 +1,68 @@
+<project name="General Utils" default="dist" basedir="..">
+
+  <description>
+    Build file for Java General Utils.
+  </description>
+
+  <!-- Classpath for compiling and running test apps -->
+  <path id="genutils.classpath">
+    <pathelement path="${classpath}" />
+    <pathelement location="bin" />
+    <fileset dir="lib/java" />
+  </path>
+
+  <!-- set global properties for this build -->
+  <property name="src" location="src/main/java" />
+  <property name="build" location="bin" />
+  <property name="dist" location="dist" />
+  <property name="dist-file" location="${dist}/general-utils.jar" />
+
+  <property file="build/build.properties" />
+
+  <target name="init">
+    <!-- Create the time stamp -->
+    <tstamp />
+    <!-- Create the build directory structure used by compile -->
+    <mkdir dir="${build}" />
+    <mkdir dir="${dist}" />
+  </target>
+
+  <target name="compile" depends="init" description="Compiles the sources">
+    <!-- Compile the java code from ${src} into ${build} -->
+    <javac srcdir="${src}" classpathref="genutils.classpath" destdir="${build}" includeantruntime="false" />
+  </target>
+
+  <target name="dist" depends="compile" description="Generates the full distribution">
+    <delete file="${dist-file}" />
+    <jar jarfile="${dist-file}" basedir="${build}" excludes="**/*Test.class" />
+  </target>
+
+  <target name="deploy" description="Deploy distribution to projects" depends="dist">
+    <antcall target="deploy-to-treelib" />
+    <antcall target="deploy-to-pattern-match" />
+  </target>
+
+  <target name="deploy-to-treelib" if="treelib.path">
+    <echo message="Deploying to Tree Library (${treelib.path})" />
+    <copy file="${dist-file}" todir="${treelib.path}/lib" overwrite="true" />
+  </target>
+
+  <target name="deploy-to-pattern-match" if="patterns.path">
+    <echo message="Deploying to Pattern Matcher (${patterns.path})" />
+    <copy file="${dist-file}" todir="${patterns.path}/lib" overwrite="true" />
+  </target>
+
+  <target name="clean" description="Clean up">
+    <!-- Delete the ${build} and ${dist} directory trees -->
+    <delete dir="${dist}" />
+    <delete dir="${build}" />
+  </target>
+
+  <target name="graph-create" description="Creates the graphs based on DB contents">
+    <echo message="Creating graphs" />
+    <java classpathref="genutils.classpath" classname="fi.tuska.util.db.graph.GraphRunner" fork="true" failonerror="true">
+      <jvmarg value="-ea" />
+    </java>
+  </target>
+
+</project>
